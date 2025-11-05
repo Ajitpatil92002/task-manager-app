@@ -1,3 +1,5 @@
+'use client';
+
 import {
     CalendarIcon,
     CheckCircleIcon,
@@ -8,7 +10,7 @@ import {
     TrashIcon,
 } from '@/lib/constants';
 import type { Category, Priority, Status, Task } from '@/lib/types';
-import React from 'react';
+import type React from 'react';
 
 interface TaskItemProps {
     task: Task;
@@ -18,24 +20,6 @@ interface TaskItemProps {
     onEditTask: (task: Task) => void;
     isDraggable?: boolean;
     onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
-    isUpdating?: boolean;
-    isDeleting?: boolean;
-    errorUpdating?: string | null;
-    errorDeleting?: string | null;
-}
-
-interface TaskItemProps {
-    task: Task;
-    categories: Category[];
-    onUpdateTask: (taskId: string, updates: Partial<Task>) => void;
-    onDeleteTask: (taskId: string) => void;
-    onEditTask: (task: Task) => void;
-    isDraggable?: boolean;
-    onDragStart?: (e: React.DragEvent<HTMLDivElement>) => void;
-    isUpdating?: boolean;
-    isDeleting?: boolean;
-    errorUpdating?: string | null;
-    errorDeleting?: string | null;
 }
 
 const TaskItem: React.FC<TaskItemProps> = ({
@@ -46,16 +30,8 @@ const TaskItem: React.FC<TaskItemProps> = ({
     onEditTask,
     isDraggable,
     onDragStart,
-    isUpdating = false,
-    isDeleting = false,
-    errorUpdating = null,
-    errorDeleting = null,
 }) => {
     const category = categories.find(c => c.id === task.categoryId);
-
-    const handleStatusChange = (newStatus: Status) => {
-        onUpdateTask(task.id, { status: newStatus });
-    };
 
     const priorityColor: { [key in Priority]: string } = {
         high: 'text-red-600',
@@ -96,16 +72,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
                     <button
                         onClick={() => onEditTask(task)}
                         className='text-gray-400 hover:text-indigo-500'
-                        disabled={isUpdating || isDeleting}
-                        aria-label={`Edit ${task.title}`}
                     >
                         <EditIcon className='w-4 h-4' />
                     </button>
                     <button
                         onClick={() => onDeleteTask(task.id)}
                         className='text-gray-400 hover:text-red-500'
-                        disabled={isUpdating || isDeleting}
-                        aria-label={`Delete ${task.title}`}
                     >
                         <TrashIcon className='w-4 h-4' />
                     </button>
@@ -155,10 +127,12 @@ const TaskItem: React.FC<TaskItemProps> = ({
                 </div>
                 <select
                     value={task.status}
-                    onChange={e => handleStatusChange(e.target.value as Status)}
+                    onChange={e =>
+                        onUpdateTask(task.id, {
+                            status: e.target.value as Status,
+                        })
+                    }
                     className='text-xs bg-gray-100 border-none rounded-md py-1 px-2 focus:ring-2 focus:ring-indigo-500'
-                    disabled={isUpdating || isDeleting}
-                    aria-label={`Change status for ${task.title}`}
                 >
                     <option value='todo'>{STATUS_MAP.todo}</option>
                     <option value='inprogress'>{STATUS_MAP.inprogress}</option>

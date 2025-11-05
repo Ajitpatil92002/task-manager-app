@@ -1,7 +1,10 @@
+'use client';
+
 import { EditIcon, PRIORITY_MAP, STATUS_MAP, TrashIcon } from '@/lib/constants';
 import type { Category, Priority, Status, Task, View } from '@/lib/types';
-import React, { useMemo, useState } from 'react';
-import TaskItem from './TaskItem';
+import type React from 'react';
+import { useMemo, useState } from 'react';
+import TaskItem from './task-item';
 
 interface TaskListProps {
     view: View;
@@ -12,19 +15,12 @@ interface TaskListProps {
     onEditTask: (task: Task) => void;
 }
 
-const KanbanView: React.FC<
-    Omit<TaskListProps, 'view'> & {
-        updateTaskLoadingIds: Set<string>;
-        deleteTaskLoadingIds: Set<string>;
-    }
-> = ({
+const KanbanView: React.FC<Omit<TaskListProps, 'view'>> = ({
     tasks,
     categories,
     onUpdateTask,
     onDeleteTask,
     onEditTask,
-    updateTaskLoadingIds,
-    deleteTaskLoadingIds,
 }) => {
     const [draggingOverStatus, setDraggingOverStatus] = useState<Status | null>(
         null
@@ -83,12 +79,6 @@ const KanbanView: React.FC<
                                         handleDragStart(e, task.id)
                                     }
                                     isDraggable={true}
-                                    isUpdating={updateTaskLoadingIds.has(
-                                        task.id
-                                    )}
-                                    isDeleting={deleteTaskLoadingIds.has(
-                                        task.id
-                                    )}
                                 />
                             ))}
                     </div>
@@ -98,19 +88,12 @@ const KanbanView: React.FC<
     );
 };
 
-const ListView: React.FC<
-    Omit<TaskListProps, 'view'> & {
-        updateTaskLoadingIds: Set<string>;
-        deleteTaskLoadingIds: Set<string>;
-    }
-> = ({
+const ListView: React.FC<Omit<TaskListProps, 'view'>> = ({
     tasks,
     categories,
     onUpdateTask,
     onDeleteTask,
     onEditTask,
-    updateTaskLoadingIds,
-    deleteTaskLoadingIds,
 }) => {
     return (
         <div className='space-y-4'>
@@ -122,27 +105,18 @@ const ListView: React.FC<
                     onUpdateTask={onUpdateTask}
                     onDeleteTask={onDeleteTask}
                     onEditTask={onEditTask}
-                    isUpdating={updateTaskLoadingIds.has(task.id)}
-                    isDeleting={deleteTaskLoadingIds.has(task.id)}
                 />
             ))}
         </div>
     );
 };
 
-const TableView: React.FC<
-    Omit<TaskListProps, 'view'> & {
-        updateTaskLoadingIds: Set<string>;
-        deleteTaskLoadingIds: Set<string>;
-    }
-> = ({
+const TableView: React.FC<Omit<TaskListProps, 'view'>> = ({
     tasks,
     categories,
     onUpdateTask,
     onDeleteTask,
     onEditTask,
-    updateTaskLoadingIds,
-    deleteTaskLoadingIds,
 }) => {
     const getCategoryName = (categoryId?: string) => {
         return categories.find(c => c.id === categoryId)?.name || 'N/A';
@@ -202,7 +176,7 @@ const TableView: React.FC<
                             <td className='px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 block md:table-cell'>
                                 <span className='font-semibold md:hidden'>
                                     Title:{' '}
-                                </span>{' '}
+                                </span>
                                 {task.title}
                                 <p className='text-sm text-gray-500 mt-1 md:hidden'>
                                     {task.description}
@@ -237,14 +211,12 @@ const TableView: React.FC<
                                     <button
                                         onClick={() => onEditTask(task)}
                                         className='text-indigo-600 hover:text-indigo-900'
-                                        aria-label={`Edit ${task.title}`}
                                     >
                                         <EditIcon className='w-5 h-5' />
                                     </button>
                                     <button
                                         onClick={() => onDeleteTask(task.id)}
                                         className='text-red-600 hover:text-red-900'
-                                        aria-label={`Delete ${task.title}`}
                                     >
                                         <TrashIcon className='w-5 h-5' />
                                     </button>
@@ -259,21 +231,13 @@ const TableView: React.FC<
 };
 
 const TaskList: React.FC<TaskListProps> = props => {
-    const { tasks, categories, view, onUpdateTask, onDeleteTask, onEditTask } =
-        props;
+    const { tasks, categories, view } = props;
 
     const [categoryFilter, setCategoryFilter] = useState('');
     const [statusFilter, setStatusFilter] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [sortBy, setSortBy] = useState<'default' | 'priority'>('default');
-
-    const [updateTaskLoadingIds, setUpdateTaskLoadingIds] = useState<
-        Set<string>
-    >(new Set());
-    const [deleteTaskLoadingIds, setDeleteTaskLoadingIds] = useState<
-        Set<string>
-    >(new Set());
 
     const processedTasks = useMemo(() => {
         let filtered = [...tasks];
@@ -315,33 +279,7 @@ const TaskList: React.FC<TaskListProps> = props => {
         setSortBy('default');
     };
 
-    const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
-        setUpdateTaskLoadingIds(prev => new Set(prev).add(taskId));
-        try {
-            await onUpdateTask(taskId, updates);
-        } finally {
-            setUpdateTaskLoadingIds(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(taskId);
-                return newSet;
-            });
-        }
-    };
-
-    const handleDeleteTask = async (taskId: string) => {
-        setDeleteTaskLoadingIds(prev => new Set(prev).add(taskId));
-        try {
-            await onDeleteTask(taskId);
-        } finally {
-            setDeleteTaskLoadingIds(prev => {
-                const newSet = new Set(prev);
-                newSet.delete(taskId);
-                return newSet;
-            });
-        }
-    };
-
-    if (tasks.length === 0) {
+    if (props.tasks.length === 0) {
         return (
             <div className='flex-1 flex items-center justify-center text-gray-500 p-4 text-center'>
                 No tasks in this group. Add one to get started!
@@ -350,14 +288,7 @@ const TaskList: React.FC<TaskListProps> = props => {
     }
 
     const renderView = () => {
-        const viewProps = {
-            ...props,
-            tasks: processedTasks,
-            updateTaskLoadingIds,
-            deleteTaskLoadingIds,
-            onUpdateTask: handleUpdateTask,
-            onDeleteTask: handleDeleteTask,
-        };
+        const viewProps = { ...props, tasks: processedTasks };
         switch (view) {
             case 'list':
                 return <ListView {...viewProps} />;
