@@ -2,6 +2,7 @@
 
 import { useTaskContext } from '@/context/task-context';
 import { FolderIcon, LayoutGridIcon, PlusIcon, TagIcon } from '@/lib/constants';
+import { BrainIcon } from 'lucide-react';
 import Link from 'next/link';
 import type React from 'react';
 
@@ -79,6 +80,10 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <NavItem href='/category' isActive={false}>
                     <TagIcon className='w-5 h-5 mr-3' />
                     <span>Categories</span>
+                </NavItem>
+                <NavItem href='/chat' isActive={false}>
+                    <BrainIcon className='w-5 h-5 mr-3' />
+                    <span>AI Chats</span>
                 </NavItem>
             </nav>
 
